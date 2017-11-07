@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using System.Xml.Serialization;
 
@@ -14,6 +15,7 @@ namespace SyncFolders
         const string fileName = "SyncConfig.xml";
         public string SourceFolder { get; set; }
         public string DestinationFolder { get; set; }
+        public List<string> IgnoreFiles { get; set; }
         /// <summary>
         /// 0: default (normal)
         /// 1: exhaustive
@@ -27,6 +29,10 @@ namespace SyncFolders
             if (!File.Exists(path))
             {
                 retValue = new SyncConfig();
+                retValue.IgnoreFiles = new List<string>()
+                {
+                    "Thumbs.db"
+                };
                 WriteConfig(retValue);
             }
             else

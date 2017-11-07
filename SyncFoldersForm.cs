@@ -72,7 +72,7 @@ namespace SyncFolders
                     syncConfig.DestinationFolder = txtDstFolder.Text;
                     SyncConfig.WriteConfig(syncConfig);
 
-                    syncFolders = new SyncFolders(txtSrcFolder.Text, txtDstFolder.Text, syncConfig.TraceLevel);
+                    syncFolders = new SyncFolders(txtSrcFolder.Text, txtDstFolder.Text, syncConfig.TraceLevel, syncConfig.IgnoreFiles);
                     syncFolders.TraceFired += SyncFolders_TraceFired;
                     syncFolders.Finished += SyncFolders_Finished;
                     syncFolders.StartSyncFolders();

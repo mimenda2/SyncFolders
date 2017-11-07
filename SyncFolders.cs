@@ -13,12 +13,14 @@ namespace SyncFolders
         string originSrcFolder = "";
         string originDstFolder = "";
         TraceLevels traceLevel = TraceLevels.Normal;
+        IList<string> ignoreFiles;
 
-        public SyncFolders(string srcFolder, string dstFolder, TraceLevels traceLevel = TraceLevels.Normal)
+        public SyncFolders(string srcFolder, string dstFolder, TraceLevels traceLevel, IList<string> ignoreFiles)
         {
             this.originSrcFolder = srcFolder;
             this.originDstFolder = dstFolder;
             this.traceLevel = traceLevel;
+            this.ignoreFiles = ignoreFiles;
         }
         #region Public methods
         public void StartSyncFolders()
@@ -85,47 +87,51 @@ namespace SyncFolders
             }
             return folderExist;
         }
+        
         void CheckDestinationFile(FileInfo srcFile, bool isNewFolder)
         {
-            bool copyFile = true;
-            string dstFileName = srcFile.FullName.Replace(originSrcFolder, originDstFolder);
-            if (!isNewFolder)
+            if (ignoreFiles == null || !ignoreFiles.Contains(srcFile.Name))
             {
-                FileInfo dstFile = new FileInfo(dstFileName);
-                if (dstFile.Exists)
+                bool copyFile = true;
+                string dstFileName = srcFile.FullName.Replace(originSrcFolder, originDstFolder);
+                if (!isNewFolder)
                 {
-                    if (srcFile.Length == 0)
+                    FileInfo dstFile = new FileInfo(dstFileName);
+                    if (dstFile.Exists)
                     {
-                        TraceFired?.Invoke($"El fichero origen tiene tamaño cero {srcFile.FullName}. No se copia!");
-                        copyFile = false;
+                        if (srcFile.Length == 0)
+                        {
+                            TraceFired?.Invoke($"El fichero origen tiene tamaño cero {srcFile.FullName}. No se copia!");
+                            copyFile = false;
+                        }
+                        else if (srcFile.LastWriteTime < dstFile.LastWriteTime &&
+                            (dstFile.LastWriteTime - srcFile.LastWriteTime).TotalSeconds > 5)
+                        {
+                            TraceFired?.Invoke($"El fichero origen es más antiguo {srcFile.FullName}. No se copia!");
+                            copyFile = false;
+                        }
+                        else if (srcFile.Length == dstFile.Length &&
+                            Math.Abs((srcFile.LastWriteTime - dstFile.LastWriteTime).TotalSeconds) < 5)
+                        {
+                            if (traceLevel == TraceLevels.All)
+                                TraceFired?.Invoke($"Tamaño ficheros igual {originSrcFolder}. Src({srcFile.Length}) != Dst({dstFile.Length})");
+                            copyFile = false;
+                        }
                     }
-                    else if (srcFile.LastWriteTime < dstFile.LastWriteTime && 
-                        (dstFile.LastWriteTime - srcFile.LastWriteTime).TotalSeconds > 5)
-                    {
-                        TraceFired?.Invoke($"El fichero origen es más antiguo {srcFile.FullName}. No se copia!");
-                        copyFile = false;
-                    }
-                    else if (srcFile.Length == dstFile.Length &&
-                        Math.Abs((srcFile.LastWriteTime - dstFile.LastWriteTime).TotalSeconds) < 5)
+                }
+
+                if (copyFile)
+                {
+                    try
                     {
                         if (traceLevel == TraceLevels.All)
-                            TraceFired?.Invoke($"Tamaño ficheros igual {originSrcFolder}. Src({srcFile.Length}) != Dst({dstFile.Length})");
-                        copyFile = false;
+                            TraceFired?.Invoke($"Copiando fichero {srcFile.FullName} a {dstFileName}");
+                        srcFile.CopyTo(dstFileName, true);
                     }
-                }
-            }
-
-            if (copyFile)
-            {
-                try
-                {
-                    if (traceLevel == TraceLevels.All)
-                        TraceFired?.Invoke($"Copiando fichero {srcFile.FullName} a {dstFileName}");
-                    srcFile.CopyTo(dstFileName, true);
-                }
-                catch (Exception ex)
-                {
-                    TraceFired?.Invoke($"Error al reemplazar fichero {dstFileName}: {ex.Message}");
+                    catch (Exception ex)
+                    {
+                        TraceFired?.Invoke($"Error al reemplazar fichero {dstFileName}: {ex.Message}");
+                    }
                 }
             }
         }
