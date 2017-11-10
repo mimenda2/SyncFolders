@@ -57,9 +57,9 @@ namespace SyncFolders
                 !string.IsNullOrEmpty(txtDstFolder.Text))
             {
                 if (!Directory.Exists(txtSrcFolder.Text))
-                    MessageBox.Show("EL DIRECTORIO ORIGEN NO EXISTE!");
+                    MessageBox.Show("SOURCE FOLDER DOES NOT EXIST!");
                 else if (!Directory.Exists(txtDstFolder.Text))
-                    MessageBox.Show("EL DIRECTORIO DESTINO NO EXISTE!");
+                    MessageBox.Show("DESTINATION FOLDER DOES NOT EXIST!");
                 else
                 {
                     btnCancel.Visible = true;
@@ -79,7 +79,7 @@ namespace SyncFolders
                 }
             }
             else
-                MessageBox.Show("HAY QUE RELLENAR EL DIRECTORIO ORIGEN Y DESTINO!");
+                MessageBox.Show("YOU HAVE TO FILL SOURCE AND DESTINATION FOLDER!");
         }
 
         private void SyncFolders_Finished(string msg)

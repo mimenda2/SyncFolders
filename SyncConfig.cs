@@ -12,16 +12,31 @@ namespace SyncFolders
     }
     public class SyncConfig
     {
+        /// <summary>
+        /// Conf file name
+        /// </summary>
         const string fileName = "SyncConfig.xml";
+        /// <summary>
+        /// Last source folder
+        /// </summary>
         public string SourceFolder { get; set; }
+        /// <summary>
+        /// Last destination folder
+        /// </summary>
         public string DestinationFolder { get; set; }
+        /// <summary>
+        /// Ignore files
+        /// </summary>
         public List<string> IgnoreFiles { get; set; }
         /// <summary>
         /// 0: default (normal)
         /// 1: exhaustive
         /// </summary>
         public TraceLevels TraceLevel { get; set; }
-
+        /// <summary>
+        /// Read the configuration
+        /// </summary>
+        /// <returns></returns>
         public static SyncConfig ReadConfig()
         {
             SyncConfig retValue = null;
@@ -44,10 +59,17 @@ namespace SyncFolders
             }
             return retValue;
         }
+        /// <summary>
+        /// PAth to save the conf file
+        /// </summary>
         static string FullPath
         {
             get { return Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), fileName); }
         }
+        /// <summary>
+        /// Save the conf file
+        /// </summary>
+        /// <param name="syncConfig"></param>
         public static void WriteConfig(SyncConfig syncConfig)
         {
             XmlSerializer xmlSerializer = new XmlSerializer(typeof(SyncConfig));

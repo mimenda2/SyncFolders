@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SyncFolders
 {
@@ -15,6 +12,9 @@ namespace SyncFolders
         TraceLevels traceLevel = TraceLevels.Normal;
         IList<string> ignoreFiles;
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
         public SyncFolders(string srcFolder, string dstFolder, TraceLevels traceLevel, IList<string> ignoreFiles)
         {
             this.originSrcFolder = srcFolder;
@@ -22,27 +22,44 @@ namespace SyncFolders
             this.traceLevel = traceLevel;
             this.ignoreFiles = ignoreFiles;
         }
+
         #region Public methods
+        /// <summary>
+        /// Start to sync the folders
+        /// </summary>
         public void StartSyncFolders()
         {
-            TraceFired?.Invoke("Empezando sincronización");
+            TraceFired?.Invoke("Start synchronization");
 
             CopyFolderRecursive(new DirectoryInfo(originSrcFolder));
             
-            Finished?.Invoke("Fin sincronización");
+            Finished?.Invoke("Synchronization completed!");
         }
+        /// <summary>
+        /// Cancel operation
+        /// </summary>
         public void Cancel()
         {
-            TraceFired?.Invoke("Cancelando...");
+            TraceFired?.Invoke("Cancelling...");
             cancelSync = true;
         }
         #endregion
 
         #region Public events
+        /// <summary>
+        /// Generate a trace 
+        /// </summary>
         public event StringDelegate TraceFired;
+        /// <summary>
+        /// Synchronization completed
+        /// </summary>
         public event StringDelegate Finished;
         #endregion
 
+        #region Private methods
+        /// <summary>
+        /// Copy a folder recursively
+        /// </summary>
         void CopyFolderRecursive(DirectoryInfo folder)
         {
             bool isNewFolder = !CheckDestinationFolder(folder);
@@ -66,6 +83,9 @@ namespace SyncFolders
                 CopyFolderRecursive(d);
             }
         }
+        /// <summary>
+        /// Check if src folder exists in destination
+        /// </summary>
         bool CheckDestinationFolder(DirectoryInfo srcFolder)
         {
             bool folderExist = true;
@@ -76,18 +96,20 @@ namespace SyncFolders
                 folderExist = false;
                 try
                 {
-                    TraceFired?.Invoke($"Creando directorio en destino {dstFolder.FullName}");
+                    TraceFired?.Invoke($"Creating destination folder {dstFolder.FullName}");
                     dstFolder.Create();
                 }
                 catch (Exception ex)
                 {
-                    TraceFired?.Invoke($"Error al crear directorio {dstFolder.FullName}: {ex.Message}");
+                    TraceFired?.Invoke($"Error creating the folder {dstFolder.FullName}: {ex.Message}");
                     cancelSync = true;
                 }
             }
             return folderExist;
         }
-        
+        /// <summary>
+        /// Check if destination file exists or it is older
+        /// </summary>
         void CheckDestinationFile(FileInfo srcFile, bool isNewFolder)
         {
             if (ignoreFiles == null || !ignoreFiles.Contains(srcFile.Name))
@@ -101,20 +123,20 @@ namespace SyncFolders
                     {
                         if (srcFile.Length == 0)
                         {
-                            TraceFired?.Invoke($"El fichero origen tiene tamaño cero {srcFile.FullName}. No se copia!");
+                            TraceFired?.Invoke($"Source file has zero size {srcFile.FullName}. Ignore file!");
                             copyFile = false;
                         }
                         else if (srcFile.LastWriteTime < dstFile.LastWriteTime &&
                             (dstFile.LastWriteTime - srcFile.LastWriteTime).TotalSeconds > 5)
                         {
-                            TraceFired?.Invoke($"El fichero origen es más antiguo {srcFile.FullName}. No se copia!");
+                            TraceFired?.Invoke($"Origin file is older {srcFile.FullName}. Ignore file!");
                             copyFile = false;
                         }
                         else if (srcFile.Length == dstFile.Length &&
                             Math.Abs((srcFile.LastWriteTime - dstFile.LastWriteTime).TotalSeconds) < 5)
                         {
                             if (traceLevel == TraceLevels.All)
-                                TraceFired?.Invoke($"Tamaño ficheros igual {originSrcFolder}. Src({srcFile.Length}) != Dst({dstFile.Length})");
+                                TraceFired?.Invoke($"Same files {originSrcFolder}. Src({srcFile.Length}) != Dst({dstFile.Length})");
                             copyFile = false;
                         }
                     }
@@ -125,17 +147,20 @@ namespace SyncFolders
                     try
                     {
                         if (traceLevel == TraceLevels.All)
-                            TraceFired?.Invoke($"Copiando fichero {srcFile.FullName} a {dstFileName}");
+                            TraceFired?.Invoke($"Copying file {srcFile.FullName} a {dstFileName}");
                         srcFile.CopyTo(dstFileName, true);
                     }
                     catch (Exception ex)
                     {
-                        TraceFired?.Invoke($"Error al reemplazar fichero {dstFileName}: {ex.Message}");
+                        TraceFired?.Invoke($"Error replacing the file {dstFileName}: {ex.Message}");
                     }
                 }
             }
         }
-
+        #endregion
     }
+    /// <summary>
+    /// Delegate used to send a string
+    /// </summary>
     public delegate void StringDelegate(string msg);
 }
