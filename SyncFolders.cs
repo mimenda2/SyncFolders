@@ -12,6 +12,7 @@ namespace SyncFolders
         TraceLevels traceLevel = TraceLevels.Normal;
         IList<string> ignoreFiles;
 
+
         /// <summary>
         /// Constructor
         /// </summary>
